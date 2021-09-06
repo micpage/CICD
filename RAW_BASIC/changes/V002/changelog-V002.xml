@@ -7,7 +7,7 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd
     http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.4.xsd ">
 
-	<property name="data_tablespace" value="TBSPD00001" dbms="db2"/>
+	<property name="data_tablespace" value="USERSPACE1" dbms="db2"/>
 	<changeSet  id="DB-20201231"  author="IB14KM" labels="DB-20201231">  
         <createTable  tableName="EMPLOYEE" tablespace="${data_tablespace}" remarks="created with liquibase">  
             <column  name="EMPNO"  type="int"  autoIncrement="true">  
