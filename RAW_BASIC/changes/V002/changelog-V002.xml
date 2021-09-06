@@ -7,12 +7,32 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd
     http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.4.xsd ">
 
-<changeSet id="V002-1" author="author name">
-	<!--Insert XML changes objects here https://www.liquibase.org/documentation/xml_format.html-->
-</changeSet>
+	<property name="data_tablespace" value="TBSPD00001" dbms="db2"/>
+	<changeSet  id="DB-20201231"  author="IB14KM" labels="DB-20201231">  
+        <createTable  tableName="EMPLOYEE" tablespace="${data_tablespace}" remarks="created with liquibase">  
+            <column  name="EMPNO"  type="int"  autoIncrement="true">  
+                <constraints  primaryKey="true"  nullable="false"/>  
+            </column>  
+            <column  name="FIRSTNME"  type="varchar(50)"/>  
+            <column  name="LASTNAME"  type="varchar(50)">  
+                <constraints  nullable="false"/>  
+            </column>  
+            <column  name="WORKDEPT"  type="char(3)"/>  
+        </createTable>  
+    </changeSet>   
 
-<changeSet id="V002-2" author="author name">
-	<!--Insert XML changes objects here https://www.liquibase.org/documentation/xml_format.html-->
+	<changeSet id="createIndex-example" author="IB14KM" labels="DB-20201231">
+		<createIndex 
+            indexName="IX_EMPLOYEE_01"
+            tableName="EMPLOYEE"            
+            unique="false">
+			<column descending="true" name="LASTNAME"/>
+		</createIndex>
+	</changeSet>
+
+
+<changeSet author="IB14KM" id="version_1.0_TAG" labels="DB-20201231">
+        <tagDatabase  tag="DB-20201231"/>
 </changeSet>
 
 </databaseChangeLog>

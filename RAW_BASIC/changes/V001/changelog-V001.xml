@@ -7,12 +7,19 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd
     http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-4.4.xsd ">
 
-<changeSet id="V001-1" author="author name">
-	<!--Insert XML changes objects here https://www.liquibase.org/documentation/xml_format.html-->
-</changeSet>
+	<changeSet  id="V_DATABASECHANGELOG"  author="IB14KM" labels="inital">  
+		<sqlFile
+                        dbms="db2" endDelimiter=";"
+                        path="sql/V_DATABASECHANGELOG.sql" relativeToChangelogFile="true"
+                        splitStatements="true" stripComments="true"/>
+		<rollback>
+			DROP VIEW V_DATABASECHANGELOG
+		</rollback>
+	</changeSet>   
 
-<changeSet id="V001-2" author="author name">
-	<!--Insert XML changes objects here https://www.liquibase.org/documentation/xml_format.html-->
-</changeSet>
+
+	<changeSet  id="V_DATABASECHANGELOG_TAG"  author="IB14KM" labels="inital">
+		<tagDatabase  tag="inital"/>
+	</changeSet>
 
 </databaseChangeLog>
