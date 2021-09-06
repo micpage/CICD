@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset your.name:6
+--changeset book.master:6
 CREATE TABLE TA_BOOK_GENRES(
   BOOK_ID  INT NOT NULL, 
   GENRE_ID INT NOT NULL

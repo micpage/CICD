@@ -1,6 +1,6 @@
 --liquibase formatted sql
 
---changeset your.name:7
+--changeset book.master:7
 -- genres
 INSERT INTO TA_GENRES (genre_id, genre, parent_id) VALUES (69, 'Genres', NULL);
 INSERT INTO TA_GENRES (genre_id, genre, parent_id) VALUES (4, 'Anthropology', 69);
