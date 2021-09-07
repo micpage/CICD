@@ -1,0 +1,84 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@2.40">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.8.4"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.8.4">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description>Abbildung der CI/CD als Pipeline-Projekt. Alle Schritte (Build-Steps) werden per Script definiert. </description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.90">
+    <script>pipeline {
+
+    agent any
+    
+    environment {
+        //relativ zum Workspace
+        PROGRAM = &quot;/liquibase_4.4.3/liquibase&quot;
+        PROPERTY_FILE = &apos;RAW_BASIC/liquibase.properties&apos;
+        GIT_URL = &apos;https://github.com/micpage/CICD&apos;
+        GIT_CREDENTIALS = &apos;github&apos;
+        DB_CREDENTIALS  = &apos;db2inst1&apos;
+        VERA_ID = &apos;DB2LUW-4322&apos;
+    }
+    
+    stages {
+        stage (&apos;checkout git repository&apos;){
+            steps{
+                checkout([$class: &apos;GitSCM&apos;, branches: [[name: &apos;*/master&apos;]], extensions: [], userRemoteConfigs: [[credentialsId: &quot;$GIT_CREDENTIALS&quot;, url: &quot;$GIT_URL&quot;]]])
+            }
+        }
+        stage (&apos;pre checks&apos;) {
+            steps {
+                withCredentials([usernamePassword(credentialsId: &quot;$DB_CREDENTIALS&quot;, passwordVariable: &apos;DB_PASSWORD&apos;, usernameVariable: &apos;DB_USERNAME&apos;)]) {
+                    sh &quot;${PROGRAM} --defaults-file=${PROPERTY_FILE} --username=$DB_USERNAME --password=$DB_PASSWORD validate&quot;
+                    sh &quot;${PROGRAM} --defaults-file=${PROPERTY_FILE} --username=$DB_USERNAME --password=$DB_PASSWORD list-locks&quot;
+                    sh &quot;${PROGRAM} --defaults-file=${PROPERTY_FILE} --username=$DB_USERNAME --password=$DB_PASSWORD history&quot;
+                    sh &quot;${PROGRAM} --defaults-file=${PROPERTY_FILE} --username=$DB_USERNAME --password=$DB_PASSWORD status&quot;
+                }
+            }
+        }
+        stage (&apos;update-sql&apos;) {
+            steps {
+                withCredentials([usernamePassword(credentialsId: &quot;$DB_CREDENTIALS&quot;, passwordVariable: &apos;DB_PASSWORD&apos;, usernameVariable: &apos;DB_USERNAME&apos;)]) {
+                    sh &quot;${PROGRAM} --defaults-file=${PROPERTY_FILE} --username=$DB_USERNAME --password=$DB_PASSWORD update-sql&quot;
+                }
+            }
+        }
+        stage (&apos;update&apos;) {
+            steps {
+                withCredentials([usernamePassword(credentialsId: &quot;$DB_CREDENTIALS&quot;, passwordVariable: &apos;DB_PASSWORD&apos;, usernameVariable: &apos;DB_USERNAME&apos;)]) {
+                    sh &quot;${PROGRAM} --defaults-file=${PROPERTY_FILE} --username=$DB_USERNAME --password=$DB_PASSWORD --log-level=INFO --log-file=${env.JOB_BASE_NAME}_${env.BUILD_ID}_update.log update&quot;
+                }
+            }
+        }
+        stage (&apos;history&apos;) {
+            steps {
+                withCredentials([usernamePassword(credentialsId: &quot;$DB_CREDENTIALS&quot;, passwordVariable: &apos;DB_PASSWORD&apos;, usernameVariable: &apos;DB_USERNAME&apos;)]) {
+                    sh &quot;${PROGRAM} --defaults-file=${PROPERTY_FILE} --username=$DB_USERNAME --password=$DB_PASSWORD history&quot;
+                }
+            }
+        }
+        /*
+        stage (&apos;Update Vera&apos;) {
+            steps {
+                jiraAddComment comment: &quot;Jenkins Pipeline bei JenkinsPR ${env.JOB_BASE_NAME} ${env.BUILD_ID} ausgeführt&quot;, failOnError: false, idOrKey: &quot;$VERA_ID&quot;, site: &apos;VERA&apos;
+                jiraUploadAttachment failOnError: false, file: &quot;${env.JOB_BASE_NAME}_${env.BUILD_ID}_update.log&quot;, idOrKey: &quot;$VERA_ID&quot;, site: &apos;VERA&apos;
+            }
+        }
+        */
+    }
+}
+    
+    
+</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>
