@@ -1,0 +1,66 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<project>
+  <actions/>
+  <description>Abbildung der CI/CD als Projekt mit dem Liquibase Runner Plugin. Alle Schritte (Build-Steps) werden per Assistenten konfiguriert. </description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <com.coravy.hudson.plugins.github.GithubProjectProperty plugin="github@1.33.1">
+      <projectUrl>https://github.com/micpage/CICD/</projectUrl>
+      <displayName></displayName>
+    </com.coravy.hudson.plugins.github.GithubProjectProperty>
+  </properties>
+  <scm class="hudson.plugins.git.GitSCM" plugin="git@4.7.1">
+    <configVersion>2</configVersion>
+    <userRemoteConfigs>
+      <hudson.plugins.git.UserRemoteConfig>
+        <url>https://github.com/micpage/CICD</url>
+        <credentialsId>github</credentialsId>
+      </hudson.plugins.git.UserRemoteConfig>
+    </userRemoteConfigs>
+    <branches>
+      <hudson.plugins.git.BranchSpec>
+        <name>*/master</name>
+      </hudson.plugins.git.BranchSpec>
+    </branches>
+    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+    <browser class="hudson.plugins.git.browser.GithubWeb">
+      <url>https://github.com/micpage/CICD</url>
+    </browser>
+    <submoduleCfg class="empty-list"/>
+    <extensions/>
+  </scm>
+  <canRoam>true</canRoam>
+  <disabled>false</disabled>
+  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <triggers/>
+  <concurrentBuild>false</concurrentBuild>
+  <builders>
+    <org.jenkinsci.plugins.liquibase.builder.RawCliBuilder plugin="liquibase-runner@1.4.10">
+      <installationName>liquibase_4.4.3</installationName>
+      <url>jdbc:db2://ds920:51000/MYDB</url>
+      <resourceDirectories>/liquibase_4.4.3/lib</resourceDirectories>
+      <credentialsId>db2inst1</credentialsId>
+      <commandArguments>history --defaultsFile=${WORKSPACE}/RUNNER_ADVANCED/liquibase.properties --changeLogFile=${WORKSPACE}/CHANGELOG/changelog-master.xml --logLevel=INFO</commandArguments>
+    </org.jenkinsci.plugins.liquibase.builder.RawCliBuilder>
+    <org.jenkinsci.plugins.liquibase.builder.DropAllBuilder plugin="liquibase-runner@1.4.10">
+      <installationName>liquibase_4.4.3</installationName>
+      <url>jdbc:db2://ds920:51000/MYDB</url>
+      <resourceDirectories>/liquibase_4.4.3/lib</resourceDirectories>
+      <credentialsId>db2inst1</credentialsId>
+    </org.jenkinsci.plugins.liquibase.builder.DropAllBuilder>
+    <org.jenkinsci.plugins.liquibase.builder.UpdateBuilder plugin="liquibase-runner@1.4.10">
+      <installationName>liquibase_4.4.3</installationName>
+      <changeLogFile>${WORKSPACE}/CHANGELOG/changelog-master.xml</changeLogFile>
+      <url>jdbc:db2://ds920:51000/MYDB</url>
+      <contexts></contexts>
+      <liquibasePropertiesPath>${WORKSPACE}/RUNNER_ADVANCED/liquibase.properties</liquibasePropertiesPath>
+      <labels></labels>
+      <changeLogParameters></changeLogParameters>
+      <resourceDirectories>/liquibase_4.4.3/lib</resourceDirectories>
+      <credentialsId>db2inst1</credentialsId>
+    </org.jenkinsci.plugins.liquibase.builder.UpdateBuilder>
+  </builders>
+  <publishers/>
+  <buildWrappers/>
+</project>
