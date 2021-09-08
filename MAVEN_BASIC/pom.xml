@@ -23,8 +23,8 @@ http://maven.apache.org/xsd/maven-4.0.0.xsd">
 					<!--set values for Liquibase properties and settings
 					for example, the location of a properties file to use-->
 					<!-- <propertyFile>${WORKSPACE}/MAVEN_BASIC/liquibase.properties</propertyFile> -->
-<!--	     <changeLogFile>${WORKSPACE}${file.separator}CHANGELOG${file.separator}changeLog-master.xml</changeLogFile> -->
-			<changeLogFile>changeLog-master.xml</changeLogFile>
+<!--	     <changeLogFile>${WORKSPACE}${file.separator}CHANGELOG${file.separator}changelog-master.xml</changeLogFile> -->
+			<changeLogFile>changelog-master.xml</changeLogFile>
 			<changeLogDirectory>${WORKSPACE}/CHANGELOG/</changeLogDirectory>
 			<driver>com.ibm.db2.jcc.DB2Driver</driver>
 			<username>db2inst1</username>
