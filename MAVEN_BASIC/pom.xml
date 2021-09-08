@@ -1,0 +1,55 @@
+<!-- Typical Maven header information -->
+<project  xmlns="http://maven.apache.org/POM/4.0.0"  
+xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+http://maven.apache.org/xsd/maven-4.0.0.xsd">
+   
+	<modelVersion>4.0.0</modelVersion>
+	<!-- Typical Maven information for your project -->
+	<groupId>db2luw</groupId>
+	<artifactId>MAVEN_BASIC</artifactId>
+	<version>1.0</version>
+	<!-- Maven hierarchy of elements for your project -->
+	<build>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+				<!--start with basic information to get Liquibase plugin:
+				include <groupId>, <artifactID>, and <version> elements-->
+					<groupId>org.liquibase</groupId>
+					<artifactId>liquibase-maven-plugin</artifactId>
+					<version>4.4.3</version>
+					<configuration>
+					<!--set values for Liquibase properties and settings
+					for example, the location of a properties file to use-->
+					<!-- <propertyFile>${WORKSPACE}/MAVEN_BASIC/liquibase.properties</propertyFile> -->
+<!--	     <changeLogFile>${WORKSPACE}${file.separator}CHANGELOG${file.separator}changeLog-master.xml</changeLogFile> -->
+			<changeLogFile>changeLog-master.xml</changeLogFile>
+			<changeLogDirectory>${WORKSPACE}/CHANGELOG/</changeLogDirectory>
+			<driver>com.ibm.db2.jcc.DB2Driver</driver>
+			<username>db2inst1</username>
+			<password>P@ssword</password>
+			<url>jdbc:db2://ds920:51000/MYDB</url>
+			<defaultSchemaName>MAVEN_BASIC</defaultSchemaName>
+			<migrationSqlOutputFile>${WORKSPACE}/MAVEN_BASIC/updateSQL.sql</migrationSqlOutputFile>
+			<outputFileEncoding>UTF-8</outputFileEncoding>
+			<promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
+			<logLevel>DEBUG</logLevel>
+			<verbose>true</verbose>
+           </configuration>
+           <dependencies>
+           <!--set up any dependencies for Liquibase to function in your environment for example, a database-specific plugin-->
+             <dependency>
+	       <!-- use local Db2 Driver -->
+	       <groupId>com.ibm.db2.jcc.DB2Driver</groupId>
+	       <artifactId>db2jcc</artifactId>
+	       <version>db2jcc4</version>
+	       <scope>system</scope>
+    	       <systemPath>${WORKSPACE}/ressources/db2jcc4.jar</systemPath>
+	     </dependency>
+           </dependencies>
+         </plugin>
+       </plugins>
+    </pluginManagement>
+  </build>
+</project>
