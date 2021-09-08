@@ -7,7 +7,7 @@ http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<!-- Typical Maven information for your project -->
 	<groupId>db2luw</groupId>
-	<artifactId>MAVEN_BASIC</artifactId>
+	<artifactId>MAVEN_ADVANCED</artifactId>
 	<version>1.0</version>
 	<!-- Maven hierarchy of elements for your project -->
 	<build>
@@ -22,7 +22,7 @@ http://maven.apache.org/xsd/maven-4.0.0.xsd">
 					<configuration>
 					<!--set values for Liquibase properties and settings
 					for example, the location of a properties file to use-->
-					<!-- <propertyFile>${WORKSPACE}/MAVEN_BASIC/liquibase.properties</propertyFile> -->
+					<!-- <propertyFile>${WORKSPACE}/MAVEN_ADVANCED/liquibase.properties</propertyFile> -->
 <!--	     <changeLogFile>${WORKSPACE}${file.separator}CHANGELOG${file.separator}changelog-master.xml</changeLogFile> -->
 			<changeLogFile>changelog-master.xml</changeLogFile>
 			<changeLogDirectory>${WORKSPACE}/CHANGELOG/</changeLogDirectory>
@@ -30,11 +30,11 @@ http://maven.apache.org/xsd/maven-4.0.0.xsd">
 			<username>db2inst1</username>
 			<password>P@ssword</password>
 			<url>jdbc:db2://ds920:51000/MYDB</url>
-			<defaultSchemaName>MAVEN_BASIC</defaultSchemaName>
-			<migrationSqlOutputFile>${WORKSPACE}/MAVEN_BASIC/updateSQL.sql</migrationSqlOutputFile>
+			<defaultSchemaName>MAVEN_ADVANCED</defaultSchemaName>
+			<migrationSqlOutputFile>${WORKSPACE}/MAVEN_ADVANCED/updateSQL.sql</migrationSqlOutputFile>
 			<outputFileEncoding>UTF-8</outputFileEncoding>
 			<promptOnNonLocalDatabase>false</promptOnNonLocalDatabase>
-			<logLevel>INFO</logLevel>
+			<logLevel>DEBUG</logLevel>
 			<verbose>true</verbose>
            </configuration>
            <dependencies>
