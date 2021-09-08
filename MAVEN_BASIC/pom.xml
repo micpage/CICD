@@ -45,7 +45,7 @@ http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	       <artifactId>db2jcc</artifactId>
 	       <version>db2jcc4</version>
 	       <scope>system</scope>
-    	       <systemPath>${WORKSPACE}/ressources/db2jcc4.jar</systemPath>
+    	       <systemPath>/liquibase/lib/db2jcc4.jar</systemPath>
 	     </dependency>
            </dependencies>
          </plugin>
