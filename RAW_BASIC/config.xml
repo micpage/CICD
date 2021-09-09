@@ -24,7 +24,7 @@
         GIT_URL = &apos;https://github.com/micpage/CICD&apos;
         GIT_CREDENTIALS = &apos;github&apos;
         DB_CREDENTIALS  = &apos;db2inst1&apos;
-        VERA_ID = &apos;DB2LUW-4322&apos;
+        JIRA_ID = &apos;DB2LUW-4322&apos;
     }
     
     stages {
@@ -65,11 +65,19 @@
             }
         }
         /*
-        stage (&apos;Update Vera&apos;) {
+        stage (&apos;Update Jira&apos;) {
             steps {
-                jiraAddComment comment: &quot;Jenkins Pipeline bei JenkinsPR ${env.JOB_BASE_NAME} ${env.BUILD_ID} ausgeführt&quot;, failOnError: false, idOrKey: &quot;$VERA_ID&quot;, site: &apos;VERA&apos;
-                jiraUploadAttachment failOnError: false, file: &quot;${env.JOB_BASE_NAME}_${env.BUILD_ID}_update.log&quot;, idOrKey: &quot;$VERA_ID&quot;, site: &apos;VERA&apos;
+                jiraAddComment comment: &quot;Jenkins-Pipeline bei Jenkins ${env.JOB_BASE_NAME} ${env.BUILD_ID} ausgeführt&quot;, failOnError: false, idOrKey: &quot;${JIRA_ID}&quot;, site: &apos;VERA&apos;
+                jiraUploadAttachment failOnError: false, file: &quot;${env.JOB_BASE_NAME}_${env.BUILD_ID}_update.log&quot;, idOrKey: &quot;${JIRA_ID}&quot;, site: &apos;VERA&apos;
             }
+        }
+        */
+        /*
+        stage(&apos;Email&apos;) {
+            steps {
+                emailext body: &quot;Test-Email von Jenkins ${env.JOB_BASE_NAME} ${env.BUILD_ID}&quot;, subject: &apos;Test Jenkins&apos;, to: &apos;email@mail.intern&apos;
+            }
+
         }
         */
     }

@@ -1,0 +1,222 @@
+<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job@2.40">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.8.4"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.8.4">
+      <jobProperties/>
+      <triggers/>
+      <parameters>
+        <string>DB_CREDENTIALS</string>
+        <string>DB_URL</string>
+        <string>BRANCH_NAME</string>
+        <string>DEBUG</string>
+        <string>JIRA_ID</string>
+        <string>TAG_NAME</string>
+        <string>WITH_UPDATESQL</string>
+        <string>GIT_CREDENTIALS</string>
+      </parameters>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description>Abbildung der CI/CD als Pipeline-Projekt. Alle Schritte (Build-Steps) werden per Script definiert. </description>
+  <keepDependencies>false</keepDependencies>
+  <properties>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>DB_URL</name>
+          <description>Auswahl der Zieldatenbank</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>jdbc:db2://192.168.178.200:51000/MYDB</string>
+              <string>jdbc:db2://192.168.178.200:51000/SAMPLE</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>BRANCH_NAME</name>
+          <description>Auswahl des BRANCH für GitRepo</description>
+          <defaultValue>master</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>TAG_NAME</name>
+          <description>TAG_NAME für Changeset?</description>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>WITH_UPDATESQL</name>
+          <description>Speichern des UpdateSQL Outputs</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>false</string>
+              <string>true</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>DEBUG</name>
+          <description>Anzeige Zusatzinfos</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>false</string>
+              <string>true</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <com.cloudbees.plugins.credentials.CredentialsParameterDefinition plugin="credentials@2.5">
+          <name>GIT_CREDENTIALS</name>
+          <description>Zugangsdaten GIT-Repository</description>
+          <defaultValue>github</defaultValue>
+          <credentialType>com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl</credentialType>
+          <required>false</required>
+        </com.cloudbees.plugins.credentials.CredentialsParameterDefinition>
+        <com.cloudbees.plugins.credentials.CredentialsParameterDefinition plugin="credentials@2.5">
+          <name>DB_CREDENTIALS</name>
+          <description>Zugangsdaten Datenbank</description>
+          <defaultValue>db2inst1</defaultValue>
+          <credentialType>com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl</credentialType>
+          <required>false</required>
+        </com.cloudbees.plugins.credentials.CredentialsParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>JIRA_ID</name>
+          <description>JIRA_IDE to Update</description>
+          <defaultValue>DB2LUW-4322</defaultValue>
+          <trim>false</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
+  </properties>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.90">
+    <script>pipeline {
+
+    agent any
+    
+    parameters {
+        choice(choices: [&apos;jdbc:db2://192.168.178.200:51000/MYDB&apos;, &apos;jdbc:db2://192.168.178.200:51000/SAMPLE&apos;], description: &apos;Auswahl der Zieldatenbank&apos;,name: &apos;DB_URL&apos;)
+        string(name: &apos;BRANCH_NAME&apos;, defaultValue: &apos;master&apos;, description: &apos;Auswahl des BRANCH für GitRepo&apos;)
+        string(name: &apos;TAG_NAME&apos;, defaultValue: &apos;&apos;, description: &apos;TAG_NAME für Changeset?&apos;)
+        choice(choices: [false, true], description: &apos;Speichern des UpdateSQL Outputs&apos;,name: &apos;WITH_UPDATESQL&apos;)
+        choice(choices: [false, true], description: &apos;Anzeige Zusatzinfos&apos;,name: &apos;DEBUG&apos;)
+        credentials(credentialType: &apos;com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl&apos;, defaultValue: &apos;github&apos;, description: &apos;Zugangsdaten GIT-Repository&apos;, name: &apos;GIT_CREDENTIALS&apos;, required: false)
+        credentials(credentialType: &apos;com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl&apos;, defaultValue: &apos;db2inst1&apos;, description: &apos;Zugangsdaten Datenbank&apos;, name: &apos;DB_CREDENTIALS&apos;, required: false)
+        string(name: &apos;JIRA_ID&apos;, defaultValue: &apos;DB2LUW-4322&apos;, description: &apos;JIRA_IDE to Update&apos;)
+    }
+
+    
+    environment {
+        //relativ zum Workspace
+        PROGRAM = &quot;/liquibase_4.4.3/liquibase&quot;
+        PROPERTY_FILE = &apos;RAW_ADVANCED/liquibase.properties&apos;
+        GIT_URL = &apos;https://github.com/micpage/CICD&apos;
+        //GIT_CREDENTIALS = &apos;github&apos;
+        //DB_CREDENTIALS  = &apos;db2inst1&apos;
+        VERA_ID = &apos;DB2LUW-4322&apos;
+    }
+    
+    stages {
+        stage (&apos;checkout git repository&apos;){
+            steps{
+                checkout([$class: &apos;GitSCM&apos;, branches: [[name: &apos;*/${BRANCH_NAME}&apos;]], extensions: [], userRemoteConfigs: [[credentialsId: &quot;$GIT_CREDENTIALS&quot;, url: &quot;$GIT_URL&quot;]]])
+            }
+        }
+        stage (&apos;help&apos;) {
+            steps {
+                withCredentials([usernamePassword(credentialsId: &quot;$DB_CREDENTIALS&quot;, passwordVariable: &apos;DB_PASSWORD&apos;, usernameVariable: &apos;DB_USERNAME&apos;)]) {
+                    sh &quot;${PROGRAM} --help&quot;
+                }
+            }
+        }
+        stage (&apos;pre checks&apos;) {
+            when {
+                environment name: &apos;DEBUG&apos;, value: &apos;true&apos;
+            }
+            steps {
+                withCredentials([usernamePassword(credentialsId: &quot;$DB_CREDENTIALS&quot;, passwordVariable: &apos;DB_PASSWORD&apos;, usernameVariable: &apos;DB_USERNAME&apos;)]) {
+                    sh &quot;${PROGRAM} --defaults-file=${PROPERTY_FILE} --url=${DB_URL} --username=${DB_USERNAME} --password=${DB_PASSWORD} validate&quot;
+                    sh &quot;${PROGRAM} --defaults-file=${PROPERTY_FILE} --url=${DB_URL} --username=${DB_USERNAME} --password=${DB_PASSWORD} list-locks&quot;
+                    sh &quot;${PROGRAM} --defaults-file=${PROPERTY_FILE} --url=${DB_URL} --username=${DB_USERNAME} --password=${DB_PASSWORD} history&quot;
+                    sh &quot;${PROGRAM} --defaults-file=${PROPERTY_FILE} --url=${DB_URL} --username=${DB_USERNAME} --password=${DB_PASSWORD} status&quot;
+                }
+            }
+        }
+        stage (&apos;update-sql&apos;) {
+            when {
+                allOf {
+                    environment name: &apos;WITH_UPDATESQL&apos;, value: &apos;true&apos;
+                    environment name: &apos;TAG_NAME&apos;, value: &apos;&apos;
+                }
+            }
+            steps {
+                withCredentials([usernamePassword(credentialsId: &quot;$DB_CREDENTIALS&quot;, passwordVariable: &apos;DB_PASSWORD&apos;, usernameVariable: &apos;DB_USERNAME&apos;)]) {
+                    sh &quot;${PROGRAM} --defaults-file=${PROPERTY_FILE} --url=${DB_URL} --username=${DB_USERNAME} --password=${DB_PASSWORD} update-sql&quot;
+                }
+            }
+        }
+        stage (&apos;update&apos;) {
+            when {
+                environment name: &apos;TAG_NAME&apos;, value: &apos;&apos;
+            }
+            steps {
+                withCredentials([usernamePassword(credentialsId: &quot;$DB_CREDENTIALS&quot;, passwordVariable: &apos;DB_PASSWORD&apos;, usernameVariable: &apos;DB_USERNAME&apos;)]) {
+                    sh &quot;${PROGRAM} --defaults-file=${PROPERTY_FILE} --url=${DB_URL} --username=${DB_USERNAME} --password=${DB_PASSWORD} --log-level=INFO --log-file=${env.JOB_BASE_NAME}_${env.BUILD_ID}_update.log update&quot;
+                }
+            }
+        }
+        stage (&apos;update-to-tag-sql&apos;) {
+            when {
+                allOf {
+                    environment name: &apos;WITH_UPDATESQL&apos;, value: &apos;true&apos;
+                    not {environment name: &apos;TAG_NAME&apos;, value: &apos;&apos;}
+                }
+            }
+            steps {
+                withCredentials([usernamePassword(credentialsId: &quot;$DB_CREDENTIALS&quot;, passwordVariable: &apos;DB_PASSWORD&apos;, usernameVariable: &apos;DB_USERNAME&apos;)]) {
+                    sh &quot;${PROGRAM} --defaults-file=${PROPERTY_FILE} --url=${DB_URL} --username=${DB_USERNAME} --password=${DB_PASSWORD} update-to-tag-sql --tag=${TAG_NAME}&quot;
+                }
+            }
+        }
+        stage (&apos;update-to-tag&apos;) {
+            when {
+                not {environment name: &apos;TAG_NAME&apos;, value: &apos;&apos;}
+            }
+            steps {
+                withCredentials([usernamePassword(credentialsId: &quot;$DB_CREDENTIALS&quot;, passwordVariable: &apos;DB_PASSWORD&apos;, usernameVariable: &apos;DB_USERNAME&apos;)]) {
+                    sh &quot;${PROGRAM} --defaults-file=${PROPERTY_FILE} --url=${DB_URL} --username=${DB_USERNAME} --password=${DB_PASSWORD} tag-exists --tag=${TAG_NAME}&quot;
+                    sh &quot;${PROGRAM} --defaults-file=${PROPERTY_FILE} --url=${DB_URL} --username=${DB_USERNAME} --password=${DB_PASSWORD} --log-level=INFO --log-file=${env.JOB_BASE_NAME}_${env.BUILD_ID}_update.log update-to-tag --tag=${TAG_NAME}&quot;
+                }
+            }
+        }
+        stage (&apos;history&apos;) {
+            steps {
+                withCredentials([usernamePassword(credentialsId: &quot;$DB_CREDENTIALS&quot;, passwordVariable: &apos;DB_PASSWORD&apos;, usernameVariable: &apos;DB_USERNAME&apos;)]) {
+                    sh &quot;${PROGRAM} --defaults-file=${PROPERTY_FILE} --url=${DB_URL} --username=${DB_USERNAME} --password=${DB_PASSWORD} history&quot;
+                }
+            }
+        }
+        /*
+        stage (&apos;Update Jira&apos;) {
+            steps {
+                jiraAddComment comment: &quot;Jenkins-Pipeline bei Jenkins ${env.JOB_BASE_NAME} ${env.BUILD_ID} ausgeführt&quot;, failOnError: false, idOrKey: &quot;${JIRA_ID}&quot;, site: &apos;VERA&apos;
+                jiraUploadAttachment failOnError: false, file: &quot;${env.JOB_BASE_NAME}_${env.BUILD_ID}_update.log&quot;, idOrKey: &quot;${JIRA_ID}&quot;, site: &apos;VERA&apos;
+            }
+        }
+        */
+        /*
+        stage(&apos;Email&apos;) {
+            steps {
+                emailext body: &quot;Test-Email von Jenkins ${env.JOB_BASE_NAME} ${env.BUILD_ID}&quot;, subject: &apos;Test Jenkins&apos;, to: &apos;email@mail.intern&apos;
+            }
+
+        }
+        */
+    }
+}
+    
+    
+</script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>
