@@ -18,8 +18,8 @@
 	</changeSet>   
 
 
-	<changeSet  id="V_DATABASECHANGELOG_TAG"  author="IB14KM" labels="inital">
-		<tagDatabase  tag="inital"/>
+	<changeSet  id="V_DATABASECHANGELOG_TAG"  author="IB14KM" labels="initial">
+		<tagDatabase  tag="initial"/>
 	</changeSet>
 
 </databaseChangeLog>
