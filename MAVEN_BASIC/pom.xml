@@ -29,7 +29,7 @@ http://maven.apache.org/xsd/maven-4.0.0.xsd">
 			<driver>com.ibm.db2.jcc.DB2Driver</driver>
 			<username>db2inst1</username>
 			<password>P@ssword</password>
-			<url>jdbc:db2://ds920:51000/MYDB</url>
+			<url>jdbc:db2://192.168.178.200:51000/MYDB</url>
 			<defaultSchemaName>MAVEN_BASIC</defaultSchemaName>
 			<migrationSqlOutputFile>${WORKSPACE}/MAVEN_BASIC/updateSQL.sql</migrationSqlOutputFile>
 			<outputFileEncoding>UTF-8</outputFileEncoding>
