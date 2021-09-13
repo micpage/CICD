@@ -10,7 +10,7 @@ Achtung auf Reihenfolge/Gültigkeit der Einstellungen bei mehrfach Definitionen 
 Unterschiedliche Definitionen der Changelogs (https://docs.liquibase.com/concepts/basic/changelog.html)
 
 config.xml in Jenkins importieren
-Download jenkins-cli.jar und Kommandos per https://<jenkins:PORT>/cli/
+- Download jenkins-cli.jar und Kommandos per https://<jenkins:PORT>/cli/
 - Linux
   java -jar jenkins-cli.jar -s https://server --auth <user>:<token> -webSocket  create-job newjob < config.xml
 - Windows Powershell
