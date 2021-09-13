@@ -1,0 +1,53 @@
+pipeline {
+
+    agent any
+    
+    environment {
+        //relativ zum Workspace
+        GIT_URL = 'https://github.com/micpage/CICD'
+        GIT_CREDENTIALS = 'github'
+        MAVEN_PROG = '/maven/bin/mvn'
+        MAVEN_POM = 'MAVEN_ADVANCED/pom.xml'
+        DB_CREDENTIALS  = 'db2inst1'
+        VERA_ID = 'DB2LUW-4322'
+    }
+    
+    stages {
+        stage ('checkout git repository'){
+            steps{
+                checkout([$class: 'GitSCM', branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[credentialsId: "$GIT_CREDENTIALS", url: "$GIT_URL"]]])
+            }
+        }
+        stage ('pre checks') {
+            steps {
+                //sh  "${MAVEN_PROG} -f ${MAVEN_POM} liquibase:validate"
+                sh  "${MAVEN_PROG} -f ${MAVEN_POM} liquibase:listLocks"
+                sh  "${MAVEN_PROG} -f ${MAVEN_POM} liquibase:history"
+                sh  "${MAVEN_PROG} -f ${MAVEN_POM} liquibase:status"
+            }
+        }
+        stage ('update-sql') {
+            steps {
+                sh  "${MAVEN_PROG} -f ${MAVEN_POM} liquibase:updateSQL"
+            }
+        }
+        stage ('update') {
+            steps {
+                sh  "${MAVEN_PROG} -f ${MAVEN_POM} liquibase:update"
+            }
+        }
+        stage ('history') {
+            steps {
+                sh  "${MAVEN_PROG} -f ${MAVEN_POM} liquibase:history"
+            }
+        }
+        /*
+        stage ('Update Vera') {
+            steps {
+                jiraAddComment comment: "Jenkins Pipeline bei JenkinsPR ${env.JOB_BASE_NAME} ${env.BUILD_ID} ausgeführt", failOnError: false, idOrKey: "$VERA_ID", site: 'VERA'
+                jiraUploadAttachment failOnError: false, file: "${env.JOB_BASE_NAME}_${env.BUILD_ID}_update.log", idOrKey: "$VERA_ID", site: 'VERA'
+            }
+        }
+        */
+    }
+}

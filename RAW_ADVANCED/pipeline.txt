@@ -1,0 +1,124 @@
+pipeline {
+
+    agent any
+    
+    parameters {
+        choice(choices: ['jdbc:db2://192.168.178.200:51000/MYDB', 'jdbc:db2://192.168.178.200:51000/SAMPLE'], description: 'Auswahl der Zieldatenbank',name: 'DB_URL')
+        string(name: 'BRANCH_NAME', defaultValue: 'master', description: 'Auswahl des BRANCH für GitRepo')
+        string(name: 'TAG_NAME', defaultValue: '', description: 'TAG_NAME für Changeset?')
+        choice(choices: [false, true], description: 'Speichern des UpdateSQL Outputs',name: 'WITH_UPDATESQL')
+        choice(choices: [false, true], description: 'Anzeige Zusatzinfos',name: 'DEBUG')
+        credentials(credentialType: 'com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl', defaultValue: 'github', description: 'Zugangsdaten GIT-Repository', name: 'GIT_CREDENTIALS', required: false)
+        credentials(credentialType: 'com.cloudbees.plugins.credentials.impl.UsernamePasswordCredentialsImpl', defaultValue: 'db2inst1', description: 'Zugangsdaten Datenbank', name: 'DB_CREDENTIALS', required: false)
+        string(name: 'JIRA_ID', defaultValue: 'DB2LUW-4322', description: 'JIRA_IDE to Update')
+    }
+
+    
+    environment {
+        //relativ zum Workspace
+        PROGRAM = "/liquibase_4.4.3/liquibase"
+        PROPERTY_FILE = 'RAW_ADVANCED/liquibase.properties'
+        GIT_URL = 'https://github.com/micpage/CICD'
+        //GIT_CREDENTIALS = 'github'
+        //DB_CREDENTIALS  = 'db2inst1'
+        VERA_ID = 'DB2LUW-4322'
+    }
+    
+    stages {
+        stage ('checkout git repository'){
+            steps{
+                checkout([$class: 'GitSCM', branches: [[name: '*/${BRANCH_NAME}']], extensions: [], userRemoteConfigs: [[credentialsId: "$GIT_CREDENTIALS", url: "$GIT_URL"]]])
+            }
+        }
+        stage ('help') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: "$DB_CREDENTIALS", passwordVariable: 'DB_PASSWORD', usernameVariable: 'DB_USERNAME')]) {
+                    sh "${PROGRAM} --help"
+                }
+            }
+        }
+        stage ('pre checks') {
+            when {
+                environment name: 'DEBUG', value: 'true'
+            }
+            steps {
+                withCredentials([usernamePassword(credentialsId: "$DB_CREDENTIALS", passwordVariable: 'DB_PASSWORD', usernameVariable: 'DB_USERNAME')]) {
+                    sh "${PROGRAM} --defaults-file=${PROPERTY_FILE} --url=${DB_URL} --username=${DB_USERNAME} --password=${DB_PASSWORD} validate"
+                    sh "${PROGRAM} --defaults-file=${PROPERTY_FILE} --url=${DB_URL} --username=${DB_USERNAME} --password=${DB_PASSWORD} list-locks"
+                    sh "${PROGRAM} --defaults-file=${PROPERTY_FILE} --url=${DB_URL} --username=${DB_USERNAME} --password=${DB_PASSWORD} history"
+                    sh "${PROGRAM} --defaults-file=${PROPERTY_FILE} --url=${DB_URL} --username=${DB_USERNAME} --password=${DB_PASSWORD} status"
+                }
+            }
+        }
+        stage ('update-sql') {
+            when {
+                allOf {
+                    environment name: 'WITH_UPDATESQL', value: 'true'
+                    environment name: 'TAG_NAME', value: ''
+                }
+            }
+            steps {
+                withCredentials([usernamePassword(credentialsId: "$DB_CREDENTIALS", passwordVariable: 'DB_PASSWORD', usernameVariable: 'DB_USERNAME')]) {
+                    sh "${PROGRAM} --defaults-file=${PROPERTY_FILE} --url=${DB_URL} --username=${DB_USERNAME} --password=${DB_PASSWORD} update-sql"
+                }
+            }
+        }
+        stage ('update') {
+            when {
+                environment name: 'TAG_NAME', value: ''
+            }
+            steps {
+                withCredentials([usernamePassword(credentialsId: "$DB_CREDENTIALS", passwordVariable: 'DB_PASSWORD', usernameVariable: 'DB_USERNAME')]) {
+                    sh "${PROGRAM} --defaults-file=${PROPERTY_FILE} --url=${DB_URL} --username=${DB_USERNAME} --password=${DB_PASSWORD} --log-level=INFO --log-file=${env.JOB_BASE_NAME}_${env.BUILD_ID}_update.log update"
+                }
+            }
+        }
+        stage ('update-to-tag-sql') {
+            when {
+                allOf {
+                    environment name: 'WITH_UPDATESQL', value: 'true'
+                    not {environment name: 'TAG_NAME', value: ''}
+                }
+            }
+            steps {
+                withCredentials([usernamePassword(credentialsId: "$DB_CREDENTIALS", passwordVariable: 'DB_PASSWORD', usernameVariable: 'DB_USERNAME')]) {
+                    sh "${PROGRAM} --defaults-file=${PROPERTY_FILE} --url=${DB_URL} --username=${DB_USERNAME} --password=${DB_PASSWORD} update-to-tag-sql --tag=${TAG_NAME}"
+                }
+            }
+        }
+        stage ('update-to-tag') {
+            when {
+                not {environment name: 'TAG_NAME', value: ''}
+            }
+            steps {
+                withCredentials([usernamePassword(credentialsId: "$DB_CREDENTIALS", passwordVariable: 'DB_PASSWORD', usernameVariable: 'DB_USERNAME')]) {
+                    sh "${PROGRAM} --defaults-file=${PROPERTY_FILE} --url=${DB_URL} --username=${DB_USERNAME} --password=${DB_PASSWORD} tag-exists --tag=${TAG_NAME}"
+                    sh "${PROGRAM} --defaults-file=${PROPERTY_FILE} --url=${DB_URL} --username=${DB_USERNAME} --password=${DB_PASSWORD} --log-level=INFO --log-file=${env.JOB_BASE_NAME}_${env.BUILD_ID}_update.log update-to-tag --tag=${TAG_NAME}"
+                }
+            }
+        }
+        stage ('history') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: "$DB_CREDENTIALS", passwordVariable: 'DB_PASSWORD', usernameVariable: 'DB_USERNAME')]) {
+                    sh "${PROGRAM} --defaults-file=${PROPERTY_FILE} --url=${DB_URL} --username=${DB_USERNAME} --password=${DB_PASSWORD} history"
+                }
+            }
+        }
+        /*
+        stage ('Update Jira') {
+            steps {
+                jiraAddComment comment: "Jenkins-Pipeline bei Jenkins ${env.JOB_BASE_NAME} ${env.BUILD_ID} ausgeführt", failOnError: false, idOrKey: "${JIRA_ID}", site: 'VERA'
+                jiraUploadAttachment failOnError: false, file: "${env.JOB_BASE_NAME}_${env.BUILD_ID}_update.log", idOrKey: "${JIRA_ID}", site: 'VERA'
+            }
+        }
+        */
+        /*
+        stage('Email') {
+            steps {
+                emailext body: "Test-Email von Jenkins ${env.JOB_BASE_NAME} ${env.BUILD_ID}", subject: 'Test Jenkins', to: 'email@mail.intern'
+            }
+
+        }
+        */
+    }
+}
