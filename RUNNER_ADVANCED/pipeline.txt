@@ -1,0 +1,61 @@
+pipeline {
+
+    agent any
+    
+    environment {
+        //relativ zum Workspace
+        PROGRAM = "liquibase_4.4.3"
+        PROPERTY_FILE = 'RUNNER_ADVANCED/liquibase.properties'
+        GIT_URL = 'https://github.com/micpage/CICD'
+        GIT_CREDENTIALS = 'github'
+        DB_CREDENTIALS  = 'db2inst1'
+        JIRA_ID = 'DB2LUW-4322'
+    }
+    
+    stages {
+        stage ('checkout git repository'){
+            steps{
+                checkout([$class: 'GitSCM', branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[credentialsId: "$GIT_CREDENTIALS", url: "$GIT_URL"]]])
+            }
+        }
+        stage ('pre checks') {
+            steps {
+                step([$class: 'RawCliBuilder' , installationName: "$PROGRAM", liquibasePropertiesPath: "${WORKSPACE}/RUNNER_ADVANCED/liquibase.properties" , changeLogFile: "${WORKSPACE}/CHANGELOG/changelog-master.xml" , credentialsId: "$DB_CREDENTIALS", commandArguments: 'validate'])
+                step([$class: 'RawCliBuilder' , installationName: "$PROGRAM", liquibasePropertiesPath: "${WORKSPACE}/RUNNER_ADVANCED/liquibase.properties" , changeLogFile: "${WORKSPACE}/CHANGELOG/changelog-master.xml" , credentialsId: "$DB_CREDENTIALS", commandArguments: 'list-locks'])
+                step([$class: 'RawCliBuilder' , installationName: "$PROGRAM", liquibasePropertiesPath: "${WORKSPACE}/RUNNER_ADVANCED/liquibase.properties" , changeLogFile: "${WORKSPACE}/CHANGELOG/changelog-master.xml" , credentialsId: "$DB_CREDENTIALS", commandArguments: 'history'])
+                step([$class: 'RawCliBuilder' , installationName: "$PROGRAM", liquibasePropertiesPath: "${WORKSPACE}/RUNNER_ADVANCED/liquibase.properties" , changeLogFile: "${WORKSPACE}/CHANGELOG/changelog-master.xml" , credentialsId: "$DB_CREDENTIALS", commandArguments: 'status'])
+            }
+        }
+        stage ('update-sql') {
+            steps {
+                step([$class: 'RawCliBuilder' , installationName: "$PROGRAM", liquibasePropertiesPath: "${WORKSPACE}/RUNNER_ADVANCED/liquibase.properties" , changeLogFile: "${WORKSPACE}/CHANGELOG/changelog-master.xml" , credentialsId: "$DB_CREDENTIALS", commandArguments: 'update-sql'])
+            }
+        }
+        stage ('update') {
+            steps {
+                step([$class: 'UpdateBuilder' , installationName: "$PROGRAM", liquibasePropertiesPath: "${WORKSPACE}/RUNNER_ADVANCED/liquibase.properties" , changeLogFile: "${WORKSPACE}/CHANGELOG/changelog-master.xml" , credentialsId: "$DB_CREDENTIALS"])
+            }
+        }
+        stage ('history') {
+            steps {
+                step([$class: 'RawCliBuilder' , installationName: "$PROGRAM", liquibasePropertiesPath: "${WORKSPACE}/RUNNER_ADVANCED/liquibase.properties" , changeLogFile: "${WORKSPACE}/CHANGELOG/changelog-master.xml" , credentialsId: "$DB_CREDENTIALS", commandArguments: 'history'])
+            }
+        }
+        /*
+        stage ('Update Jira') {
+            steps {
+                jiraAddComment comment: "Jenkins-Pipeline bei Jenkins ${env.JOB_BASE_NAME} ${env.BUILD_ID} ausgeführt", failOnError: false, idOrKey: "${JIRA_ID}", site: 'VERA'
+                jiraUploadAttachment failOnError: false, file: "${env.JOB_BASE_NAME}_${env.BUILD_ID}_update.log", idOrKey: "${JIRA_ID}", site: 'VERA'
+            }
+        }
+        */
+        /*
+        stage('Email') {
+            steps {
+                emailext body: "Test-Email von Jenkins ${env.JOB_BASE_NAME} ${env.BUILD_ID}", subject: 'Test Jenkins', to: 'email@mail.intern'
+            }
+
+        }
+        */
+    }
+}
