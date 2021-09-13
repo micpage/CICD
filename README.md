@@ -8,3 +8,10 @@ Mehrere Möglichkeiten zur Steuerung von Liquibase (https://www.liquibase.org):
 Achtung auf Reihenfolge/Gültigkeit der Einstellungen bei mehrfach Definitionen [Configuration Hierarchy (https://docs.liquibase.com/concepts/basic/liquibase-environment-variables.html)]
 
 Unterschiedliche Definitionen der Changelogs (https://docs.liquibase.com/concepts/basic/changelog.html)
+
+config.xml in Jenkins importieren
+Download jenkins-cli.jar und Kommandos per https://<jenkins:PORT>/cli/
+- Linux
+  java -jar jenkins-cli.jar -s https://server --auth <user>:<token> -webSocket  create-job newjob < config.xml
+- Windows Powershell
+  Get-Content .\config.xml | java -jar jenkins-cli.jar -s https://server --auth <user>:<token> -webSocket create-job newJob
