@@ -41,7 +41,7 @@
       <changeLogFile>${WORKSPACE}/CHANGELOG/changelog-master.xml</changeLogFile>
       <url>jdbc:db2://192.168.178.200:51000/MYDB</url>
       <contexts></contexts>
-      <liquibasePropertiesPath>${WORKSPACE}/RUNNER_BASIC/liquibase.properties</liquibasePropertiesPath>
+      <liquibasePropertiesPath>${WORKSPACE}/RUNNER_SIMPLE/liquibase.properties</liquibasePropertiesPath>
       <labels></labels>
       <changeLogParameters></changeLogParameters>
       <resourceDirectories>/liquibase_4.4.3/lib</resourceDirectories>

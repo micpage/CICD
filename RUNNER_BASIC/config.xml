@@ -36,6 +36,19 @@
   <triggers/>
   <concurrentBuild>false</concurrentBuild>
   <builders>
+    <org.jenkinsci.plugins.liquibase.builder.RawCliBuilder plugin="liquibase-runner@1.4.10">
+      <installationName>liquibase_4.4.3</installationName>
+      <url>jdbc:db2://192.168.178.200:51000/MYDB</url>
+      <resourceDirectories>/liquibase_4.4.3/lib</resourceDirectories>
+      <credentialsId>db2inst1</credentialsId>
+      <commandArguments>history --defaultsFile=${WORKSPACE}/RUNNER_BASIC/liquibase.properties --changeLogFile=${WORKSPACE}/CHANGELOG/changelog-master.xml --logLevel=INFO</commandArguments>
+    </org.jenkinsci.plugins.liquibase.builder.RawCliBuilder>
+    <org.jenkinsci.plugins.liquibase.builder.DropAllBuilder plugin="liquibase-runner@1.4.10">
+      <installationName>liquibase_4.4.3</installationName>
+      <url>jdbc:db2://192.168.178.200:51000/MYDB</url>
+      <resourceDirectories>/liquibase_4.4.3/lib</resourceDirectories>
+      <credentialsId>db2inst1</credentialsId>
+    </org.jenkinsci.plugins.liquibase.builder.DropAllBuilder>
     <org.jenkinsci.plugins.liquibase.builder.UpdateBuilder plugin="liquibase-runner@1.4.10">
       <installationName>liquibase_4.4.3</installationName>
       <changeLogFile>${WORKSPACE}/CHANGELOG/changelog-master.xml</changeLogFile>
