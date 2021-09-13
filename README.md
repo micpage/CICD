@@ -12,6 +12,6 @@ Unterschiedliche Definitionen der Changelogs (https://docs.liquibase.com/concept
 config.xml in Jenkins importieren
 - Download jenkins-cli.jar und Kommandos per https://<jenkins:PORT>/cli/
 - Linux:
-  java -jar jenkins-cli.jar -s https://server --auth <user>:<token> -webSocket  create-job newjob < config.xml
+  java -jar jenkins-cli.jar -s https://server --auth user:token -webSocket  create-job newjob < config.xml
 - Windows Powershell:
-  Get-Content .\config.xml | java -jar jenkins-cli.jar -s https://server --auth <user>:<token> -webSocket create-job newJob
+  Get-Content .\config.xml | java -jar jenkins-cli.jar -s https://server --auth user:token -webSocket create-job newJob
