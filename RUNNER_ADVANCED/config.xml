@@ -1,66 +1,82 @@
 <?xml version='1.1' encoding='UTF-8'?>
-<project>
-  <actions/>
-  <description>Abbildung der CI/CD als Projekt mit dem Liquibase Runner Plugin. Alle Schritte (Build-Steps) werden per Assistenten konfiguriert. </description>
+<flow-definition plugin="workflow-job@2.40">
+  <actions>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobAction plugin="pipeline-model-definition@1.8.4"/>
+    <org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction plugin="pipeline-model-definition@1.8.4">
+      <jobProperties/>
+      <triggers/>
+      <parameters/>
+      <options/>
+    </org.jenkinsci.plugins.pipeline.modeldefinition.actions.DeclarativeJobPropertyTrackerAction>
+  </actions>
+  <description>Abbildung der CI/CD als Pipeline-Projekt. Alle Schritte (Build-Steps) werden per Script definiert. &#xd;
+https://www.jenkins.io/doc/pipeline/steps/liquibase-runner/</description>
   <keepDependencies>false</keepDependencies>
-  <properties>
-    <com.coravy.hudson.plugins.github.GithubProjectProperty plugin="github@1.33.1">
-      <projectUrl>https://github.com/micpage/CICD/</projectUrl>
-      <displayName></displayName>
-    </com.coravy.hudson.plugins.github.GithubProjectProperty>
-  </properties>
-  <scm class="hudson.plugins.git.GitSCM" plugin="git@4.7.1">
-    <configVersion>2</configVersion>
-    <userRemoteConfigs>
-      <hudson.plugins.git.UserRemoteConfig>
-        <url>https://github.com/micpage/CICD</url>
-        <credentialsId>github</credentialsId>
-      </hudson.plugins.git.UserRemoteConfig>
-    </userRemoteConfigs>
-    <branches>
-      <hudson.plugins.git.BranchSpec>
-        <name>*/master</name>
-      </hudson.plugins.git.BranchSpec>
-    </branches>
-    <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
-    <browser class="hudson.plugins.git.browser.GithubWeb">
-      <url>https://github.com/micpage/CICD</url>
-    </browser>
-    <submoduleCfg class="empty-list"/>
-    <extensions/>
-  </scm>
-  <canRoam>true</canRoam>
-  <disabled>false</disabled>
-  <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
-  <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+  <properties/>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.90">
+    <script>pipeline {
+
+    agent any
+    
+    environment {
+        //relativ zum Workspace
+        PROGRAM = &quot;liquibase_4.4.3&quot;
+        PROPERTY_FILE = &apos;RUNNER_ADVANCED/liquibase.properties&apos;
+        GIT_URL = &apos;https://github.com/micpage/CICD&apos;
+        GIT_CREDENTIALS = &apos;github&apos;
+        DB_CREDENTIALS  = &apos;db2inst1&apos;
+        JIRA_ID = &apos;DB2LUW-4322&apos;
+    }
+    
+    stages {
+        stage (&apos;checkout git repository&apos;){
+            steps{
+                checkout([$class: &apos;GitSCM&apos;, branches: [[name: &apos;*/master&apos;]], extensions: [], userRemoteConfigs: [[credentialsId: &quot;$GIT_CREDENTIALS&quot;, url: &quot;$GIT_URL&quot;]]])
+            }
+        }
+        stage (&apos;pre checks&apos;) {
+            steps {
+                step([$class: &apos;RawCliBuilder&apos; , installationName: &quot;$PROGRAM&quot;, liquibasePropertiesPath: &quot;${WORKSPACE}/RUNNER_ADVANCED/liquibase.properties&quot; , changeLogFile: &quot;${WORKSPACE}/CHANGELOG/changelog-master.xml&quot; , credentialsId: &quot;$DB_CREDENTIALS&quot;, commandArguments: &apos;validate&apos;])
+                step([$class: &apos;RawCliBuilder&apos; , installationName: &quot;$PROGRAM&quot;, liquibasePropertiesPath: &quot;${WORKSPACE}/RUNNER_ADVANCED/liquibase.properties&quot; , changeLogFile: &quot;${WORKSPACE}/CHANGELOG/changelog-master.xml&quot; , credentialsId: &quot;$DB_CREDENTIALS&quot;, commandArguments: &apos;list-locks&apos;])
+                step([$class: &apos;RawCliBuilder&apos; , installationName: &quot;$PROGRAM&quot;, liquibasePropertiesPath: &quot;${WORKSPACE}/RUNNER_ADVANCED/liquibase.properties&quot; , changeLogFile: &quot;${WORKSPACE}/CHANGELOG/changelog-master.xml&quot; , credentialsId: &quot;$DB_CREDENTIALS&quot;, commandArguments: &apos;history&apos;])
+                step([$class: &apos;RawCliBuilder&apos; , installationName: &quot;$PROGRAM&quot;, liquibasePropertiesPath: &quot;${WORKSPACE}/RUNNER_ADVANCED/liquibase.properties&quot; , changeLogFile: &quot;${WORKSPACE}/CHANGELOG/changelog-master.xml&quot; , credentialsId: &quot;$DB_CREDENTIALS&quot;, commandArguments: &apos;status&apos;])
+            }
+        }
+        stage (&apos;update-sql&apos;) {
+            steps {
+                step([$class: &apos;RawCliBuilder&apos; , installationName: &quot;$PROGRAM&quot;, liquibasePropertiesPath: &quot;${WORKSPACE}/RUNNER_ADVANCED/liquibase.properties&quot; , changeLogFile: &quot;${WORKSPACE}/CHANGELOG/changelog-master.xml&quot; , credentialsId: &quot;$DB_CREDENTIALS&quot;, commandArguments: &apos;update-sql&apos;])
+            }
+        }
+        stage (&apos;update&apos;) {
+            steps {
+                step([$class: &apos;UpdateBuilder&apos; , installationName: &quot;$PROGRAM&quot;, liquibasePropertiesPath: &quot;${WORKSPACE}/RUNNER_ADVANCED/liquibase.properties&quot; , changeLogFile: &quot;${WORKSPACE}/CHANGELOG/changelog-master.xml&quot; , credentialsId: &quot;$DB_CREDENTIALS&quot;])
+            }
+        }
+        stage (&apos;history&apos;) {
+            steps {
+                step([$class: &apos;RawCliBuilder&apos; , installationName: &quot;$PROGRAM&quot;, liquibasePropertiesPath: &quot;${WORKSPACE}/RUNNER_ADVANCED/liquibase.properties&quot; , changeLogFile: &quot;${WORKSPACE}/CHANGELOG/changelog-master.xml&quot; , credentialsId: &quot;$DB_CREDENTIALS&quot;, commandArguments: &apos;history&apos;])
+            }
+        }
+        /*
+        stage (&apos;Update Jira&apos;) {
+            steps {
+                jiraAddComment comment: &quot;Jenkins-Pipeline bei Jenkins ${env.JOB_BASE_NAME} ${env.BUILD_ID} ausgeführt&quot;, failOnError: false, idOrKey: &quot;${JIRA_ID}&quot;, site: &apos;VERA&apos;
+                jiraUploadAttachment failOnError: false, file: &quot;${env.JOB_BASE_NAME}_${env.BUILD_ID}_update.log&quot;, idOrKey: &quot;${JIRA_ID}&quot;, site: &apos;VERA&apos;
+            }
+        }
+        */
+        /*
+        stage(&apos;Email&apos;) {
+            steps {
+                emailext body: &quot;Test-Email von Jenkins ${env.JOB_BASE_NAME} ${env.BUILD_ID}&quot;, subject: &apos;Test Jenkins&apos;, to: &apos;email@mail.intern&apos;
+            }
+
+        }
+        */
+    }
+}</script>
+    <sandbox>true</sandbox>
+  </definition>
   <triggers/>
-  <concurrentBuild>false</concurrentBuild>
-  <builders>
-    <org.jenkinsci.plugins.liquibase.builder.RawCliBuilder plugin="liquibase-runner@1.4.10">
-      <installationName>liquibase_4.4.3</installationName>
-      <url>jdbc:db2://192.168.178.200:51000/MYDB</url>
-      <resourceDirectories>/liquibase_4.4.3/lib</resourceDirectories>
-      <credentialsId>db2inst1</credentialsId>
-      <commandArguments>history --defaultsFile=${WORKSPACE}/RUNNER_ADVANCED/liquibase.properties --changeLogFile=${WORKSPACE}/CHANGELOG/changelog-master.xml --logLevel=INFO</commandArguments>
-    </org.jenkinsci.plugins.liquibase.builder.RawCliBuilder>
-    <org.jenkinsci.plugins.liquibase.builder.DropAllBuilder plugin="liquibase-runner@1.4.10">
-      <installationName>liquibase_4.4.3</installationName>
-      <url>jdbc:db2://192.168.178.200:51000/MYDB</url>
-      <resourceDirectories>/liquibase_4.4.3/lib</resourceDirectories>
-      <credentialsId>db2inst1</credentialsId>
-    </org.jenkinsci.plugins.liquibase.builder.DropAllBuilder>
-    <org.jenkinsci.plugins.liquibase.builder.UpdateBuilder plugin="liquibase-runner@1.4.10">
-      <installationName>liquibase_4.4.3</installationName>
-      <changeLogFile>${WORKSPACE}/CHANGELOG/changelog-master.xml</changeLogFile>
-      <url>jdbc:db2://192.168.178.200:51000/MYDB</url>
-      <contexts></contexts>
-      <liquibasePropertiesPath>${WORKSPACE}/RUNNER_ADVANCED/liquibase.properties</liquibasePropertiesPath>
-      <labels></labels>
-      <changeLogParameters></changeLogParameters>
-      <resourceDirectories>/liquibase_4.4.3/lib</resourceDirectories>
-      <credentialsId>db2inst1</credentialsId>
-    </org.jenkinsci.plugins.liquibase.builder.UpdateBuilder>
-  </builders>
-  <publishers/>
-  <buildWrappers/>
-</project>
+  <disabled>false</disabled>
+</flow-definition>
